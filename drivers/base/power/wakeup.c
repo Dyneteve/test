@@ -1136,6 +1136,7 @@ static int print_wakeup_source_stats(struct seq_file *m,
 		active_time = ktime_set(0, 0);
 	}
 
+<<<<<<< HEAD
 #ifdef CONFIG_SEC_PM_DEBUG
 	seq_printf(m, "%-12s\t%lu\t\t%lu\t\t%lu\t\t%lu\t\t"
 			"%lld\t\t%lld\t\t%lld\t\t%lld\t\t%lld\t%lld\n",
@@ -1147,6 +1148,9 @@ static int print_wakeup_source_stats(struct seq_file *m,
 			ktime_to_ms(time_while_screen_off));
 #else
 	seq_printf(m, "%-12s\t%lu\t\t%lu\t\t%lu\t\t%lu\t\t%lld\t\t%lld\t\t%lld\t\t%lld\t\t%lld\n",
+=======
+	seq_printf(m, "%-32s\t%lu\t\t%lu\t\t%lu\t\t%lu\t\t%lld\t\t%lld\t\t%lld\t\t%lld\t\t%lld\n",
+>>>>>>> a03a9706465ef4bec643e22ba33cc29890d2fc13
 		   ws->name, active_count, ws->event_count,
 		   ws->wakeup_count, ws->expire_count,
 		   ktime_to_ms(active_time), ktime_to_ms(total_time),
@@ -1168,12 +1172,16 @@ static int wakeup_sources_stats_show(struct seq_file *m, void *unused)
 	struct wakeup_source *ws;
 	int srcuidx;
 
+<<<<<<< HEAD
 #ifdef CONFIG_SEC_PM_DEBUG
 	seq_puts(m, "name\t\tactive_count\tevent_count\twakeup_count\t"
 		"expire_count\tactive_since\ttotal_time\tmax_time\t"
 		"last_change\tprevent_suspend_time\ttime_while_screen_off\n");
 #else
 	seq_puts(m, "name\t\tactive_count\tevent_count\twakeup_count\t"
+=======
+	seq_puts(m, "name\t\t\t\t\tactive_count\tevent_count\twakeup_count\t"
+>>>>>>> a03a9706465ef4bec643e22ba33cc29890d2fc13
 		"expire_count\tactive_since\ttotal_time\tmax_time\t"
 		"last_change\tprevent_suspend_time\n");
 #endif

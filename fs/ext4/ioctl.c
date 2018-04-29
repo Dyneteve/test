@@ -13,7 +13,7 @@
 #include <linux/compat.h>
 #include <linux/mount.h>
 #include <linux/file.h>
-#include <linux/uuid.h>
+#include <linux/random.h>
 #include <asm/uaccess.h>
 #include "ext4_jbd2.h"
 #include "ext4.h"
@@ -626,9 +626,6 @@ resizefs_out:
 		struct ext4_encryption_policy policy;
 		int err = 0;
 
-		if (!ext4_has_feature_encrypt(sb))
-			return -EOPNOTSUPP;
-
 		if (copy_from_user(&policy,
 				   (struct ext4_encryption_policy __user *)arg,
 				   sizeof(policy))) {
@@ -706,14 +703,6 @@ encryption_policy_out:
 		return -EOPNOTSUPP;
 #endif
 	}
-
-	/* CONFIG_EPM FMP start */
-	case FS_IOC_INVAL_MAPPING:
-	{
-		return invalidate_mapping_pages(inode->i_mapping, 0, -1);
-	}
-	/* CONFIG_EPM FMP end */
-
 	default:
 		return -ENOTTY;
 	}

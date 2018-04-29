@@ -589,8 +589,7 @@ enum {
 #define EXT4_ENCRYPTION_MODE_AES_256_GCM	2
 #define EXT4_ENCRYPTION_MODE_AES_256_CBC	3
 #define EXT4_ENCRYPTION_MODE_AES_256_CTS	4
-#define FMP_ENCRYPTION_MODE_AES_256_XTS		5
-#define FMP_ENCRYPTION_MODE_AES_256_CBC		6
+#define EXT4_ENCRYPTION_MODE_AES_256_HEH	126
 
 #include "ext4_crypto.h"
 
@@ -1260,9 +1259,7 @@ struct ext4_super_block {
 	__le32	s_lpf_ino;		/* Location of the lost+found inode */
 	__le32	s_prj_quota_inum;	/* inode for tracking project quota */
 	__le32	s_checksum_seed;	/* crc32c(uuid) if csum_seed set */
-	__le32	s_reserved[92];	 	/* Padding to the s_sec_magic */
-	__le32	s_sec_magic;		/* flag for reserved inodes */
-	__le32	s_reserved2[5];		/* Padding to the end of the block */
+	__le32	s_reserved[98];		/* Padding to the end of the block */
 	__le32	s_checksum;		/* crc32c(superblock) */
 };
 
@@ -1366,9 +1363,6 @@ struct ext4_sb_info {
 	unsigned long s_ext_extents;
 #endif
 
-	/* Reserved inodes count */
-	s64 s_r_inodes_count;
-
 	/* for buddy allocator */
 	struct ext4_group_info ***s_group_info;
 	struct inode *s_buddy_cache;
@@ -1448,7 +1442,7 @@ struct ext4_sb_info {
 	struct list_head s_es_list;	/* List of inodes with reclaimable extents */
 	long s_es_nr_inode;
 	struct ext4_es_stats s_es_stats;
-	struct mb_cache *s_mb_cache;
+	struct mb2_cache *s_mb_cache;
 	spinlock_t s_es_lock ____cacheline_aligned_in_smp;
 
 	/* Ratelimit ext4 messages. */
@@ -1860,12 +1854,6 @@ static inline bool ext4_has_incompat_features(struct super_block *sb)
  */
 #define EXT4_DEF_MIN_BATCH_TIME	0
 #define EXT4_DEF_MAX_BATCH_TIME	15000 /* 15ms */
-
-/*
- * Default reserved inode count
- */
-#define EXT4_DEF_RESERVE_INODE 4096
-#define EXT4_SEC_DATA_MAGIC 0xBAB0CAFE /* data partition magic */
 
 /*
  * Minimum number of groups in a flexgroup before we separate out
@@ -2282,8 +2270,7 @@ struct page *ext4_encrypt(struct inode *inode,
 			  struct page *plaintext_page,
 			  gfp_t gfp_flags);
 int ext4_decrypt(struct page *page);
-int ext4_encrypted_zeroout(struct inode *inode, ext4_lblk_t lblk,
-			   ext4_fsblk_t pblk, ext4_lblk_t len);
+int ext4_encrypted_zeroout(struct inode *inode, struct ext4_extent *ex);
 extern const struct dentry_operations ext4_encrypted_d_ops;
 
 #ifdef CONFIG_EXT4_FS_ENCRYPTION
@@ -2527,8 +2514,6 @@ extern int ext4_filemap_fault(struct vm_area_struct *vma, struct vm_fault *vmf);
 extern qsize_t *ext4_get_reserved_space(struct inode *inode);
 extern void ext4_da_update_reserve_space(struct inode *inode,
 					int used, int quota_claim);
-extern int ext4_issue_zeroout(struct inode *inode, ext4_lblk_t lblk,
-			      ext4_fsblk_t pblk, ext4_lblk_t len);
 
 /* indirect.c */
 extern int ext4_ind_map_blocks(handle_t *handle, struct inode *inode,
@@ -2563,8 +2548,7 @@ extern int ext4_search_dir(struct buffer_head *bh,
 			   struct ext4_filename *fname,
 			   const struct qstr *d_name,
 			   unsigned int offset,
-			   struct ext4_dir_entry_2 **res_dir,
-			   char *ci_name_buf);
+			   struct ext4_dir_entry_2 **res_dir);
 extern int ext4_generic_delete_entry(handle_t *handle,
 				     struct inode *dir,
 				     struct ext4_dir_entry_2 *de_del,
@@ -2743,14 +2727,6 @@ extern void ext4_group_desc_csum_set(struct super_block *sb, __u32 group,
 				     struct ext4_group_desc *gdp);
 extern int ext4_register_li_request(struct super_block *sb,
 				    ext4_group_t first_not_zeroed);
-/* for debugging, sangwoo2.lee */
-extern void print_iloc_info(struct super_block *sb,
-				struct ext4_iloc iloc);
-extern void print_bh(struct super_block *sb,
-                  struct buffer_head *bh, int start, int len);
-extern void print_block_data(struct super_block *sb, sector_t blocknr,
-                  unsigned char *data_to_dump, int start, int len);
-/* for debugging */
 
 static inline int ext4_has_group_desc_csum(struct super_block *sb)
 {
@@ -3040,7 +3016,8 @@ extern int ext4_da_write_inline_data_end(struct inode *inode, loff_t pos,
 					 struct page *page);
 extern int ext4_try_add_inline_entry(handle_t *handle,
 				     struct ext4_filename *fname,
-				     struct inode *dir, struct inode *inode);
+				     struct dentry *dentry,
+				     struct inode *inode);
 extern int ext4_try_create_inline_dir(handle_t *handle,
 				      struct inode *parent,
 				      struct inode *inode);
